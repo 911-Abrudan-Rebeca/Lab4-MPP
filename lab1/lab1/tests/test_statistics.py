@@ -1,8 +1,8 @@
 from rest_framework import status
 from rest_framework.reverse import reverse
 
-from lab1.models import Books
-from lab1.models import Publisher
+from lab1.models import Books, Customers
+from lab1.models import Publisher, BookSold
 from rest_framework.test import APIClient
 
 from lab1.urls import urlpatterns
@@ -28,74 +28,107 @@ class statistics_testcase(TestCase):
             format="format",
             country="testcountry"
         )
-        Books.objects.create(
+        book1 = Books.objects.create(
             name='book1',
-            publisher=publisher1,
             description='desc',
             author="author",
             review="review",
-            stars=5
+            stars=5,
+            publisher=publisher1
         )
-        Books.objects.create(
+        book2 = Books.objects.create(
             name='book2',
-            publisher=publisher1,
             description='desc',
             author="author",
             review="review",
-            stars=5
+            stars=5,
+            publisher=publisher1
         )
         Books.objects.create(
-            name='book1',
-            publisher=publisher2,
+            name='book3',
             description='desc',
             author="author",
             review="review",
-            stars=5
+            stars=4,
+            publisher=publisher2
         )
 
-    def test_statistic(self):
+        customer1 = Customers.objects.create(
+            name_of_customer='customer1',
+            year_of_birth=2000,
+            address="add",
+            gender="f",
+            phone=770
+        )
+
+        customer2 = Customers.objects.create(
+            name_of_customer='customer2',
+            year_of_birth=2001,
+            address="add",
+            gender="f",
+            phone=770
+        )
+
+        BookSold.objects.create(
+            customers_id=customer1,
+            books_id=book1,
+            date="2000-12-20",
+            amount=2
+        )
+
+        BookSold.objects.create(
+            customers_id=customer2,
+            books_id=book2,
+            date="2000-12-20",
+            amount=1
+        )
+
+    # publishers ordered by the average of their books stars
+    def test_statistics_publisher(self):
         client = APIClient()
-        url = reverse('stat')
+        url = reverse('stat_publisher')
         response = client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         expected_data = [
             {
                 "id": 1,
-                "name": "publisher1",
-                "avg_production_year": 2005,
-                "car_count": 2
+                "publisher": "publisher1",
+                "avg_stars": 5,
+                "book_count": 2
             },
             {
                 "id": 2,
-                "name": "brand2",
-                "avg_production_year": 2000,
-                "car_count": 1
+                "publisher": "publisher2",
+                "avg_stars": 4,
+                "book_count": 1
             }
+
         ]
-        serializer = StatisticSerializer(expected_data, many=True)
+        serializer = StatisticsSerializerPublisher(expected_data, many=True)
         self.assertEqual(response.data, serializer.data)
 
-    def test_statistic2(self):
+    # customers ordered by the average of their books bought amount
+    def test_statistics_customers(self):
         client = APIClient()
-        url = reverse('stat2')
+        url = reverse('stat_customers')
         response = client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         expected_data = [
             {
-                "id": 2,
-                "name": "brand2",
-                "avg_hp": 200,
-                "car_count": 1
+                "id": 1,
+                "name_of_customer": "customer1",
+                "avg_amount": 2,
+                "books_sold_count": 1
             },
             {
-                "id": 1,
-                "name": "brand1",
-                "avg_hp": 125,
-                "car_count": 2
+                "id": 2,
+                "name_of_customer": "customer2",
+                "avg_amount": 1,
+                "books_sold_count": 1
             }
 
         ]
-        serializer = StatisticFoundingSerializer(expected_data, many=True)
+        serializer = StatisticsSerializerCustomer(expected_data, many=True)
         self.assertEqual(response.data, serializer.data)
