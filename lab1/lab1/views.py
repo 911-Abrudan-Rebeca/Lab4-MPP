@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import Books, Publisher, Customers, BookSold
 from .serializers import BookSerializer, BookDetailSerializer, BooksSoldSerializer, BooksSoldDetailSerializer
@@ -10,6 +11,9 @@ from .serializers import CustomerSerializer, CustomerFilterSerializer, CustomerD
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.db.models import Avg, Count
+from rest_framework.generics import  GenericAPIView,ListAPIView
+from rest_framework.viewsets import ModelViewSet
+
 
 # A request handler that returns the relevant template and content - based on the request from the user
 # takes http requests and returns http response, like HTML documents
@@ -239,3 +243,18 @@ class Statistics(APIView):
 
         serializer = StatisticsSerializerCustomer(statistics, many=True)
         return Response(serializer.data)
+
+
+class BulkAddView(APIView):
+    @csrf_exempt
+    @api_view(['POST'])
+    def bulkAddPublisherToBook(request):
+        book_id_new_publisher_list = request.data.get('book_id_new_publisher_list')
+
+        # Loop through the list of book ids and new publishers to update
+        for item in book_id_new_publisher_list:
+            books = Books.objects.get(id=item['book_id'])
+            books.publisher = Publisher.objects.get(publisher=item['new_publisher'])
+            books.save()
+
+        return Response({'message': 'Books updated successfully.'})

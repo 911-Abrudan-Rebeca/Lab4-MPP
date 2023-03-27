@@ -18,7 +18,8 @@ urlpatterns = [
     path('sold/<int:id>', views.BooksSoldAPIView.books_sold_detail),
     path('books/<int:id>/customers', views.BooksSoldAPIView.books_sold_list),
     path("publisher/statistics/", views.Statistics.statistics_publishers, name='stat_publisher'),
-    path("customers/statistics/", views.Statistics.statistics_customers, name='stat_customers')
+    path("customers/statistics/", views.Statistics.statistics_customers, name='stat_customers'),
+    path("publisher/to/books", views.BulkAddView.bulkAddPublisherToBook)
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
